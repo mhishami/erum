@@ -1,0 +1,9 @@
+.erlang.mk
+_rel
+deps
+ebin
+erl_crash.dump
+erum.d
+rel
+relx
+relx.config

@@ -1,0 +1,24 @@
+%% Application Definition
+{application, erum, [
+    {description, "Erlang Forum App"},
+    {vsn, "v0.1"},
+    {modules, []},
+    {registered, [erum_sup]},
+    {applications, [
+          kernel,
+          stdlib,
+          tuah, 
+          cowboy,
+          cowlib,
+          ranch,
+          erlydtl,
+          jsx,
+          lager,
+          mongodb,
+          bson
+    ]},
+	{mod, {erum_app, []}},
+	{env, [
+		{http, [{port, 8080}]}
+	]}
+]}.
