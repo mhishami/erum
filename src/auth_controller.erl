@@ -7,8 +7,8 @@
 before_filter(_) ->
     {ok, proceed}.
 
-handle_request(<<"GET">>, <<"login">> = Action, _, _, _) ->
-    {render, Action, []};
+handle_request(<<"GET">>, <<"login">>, _, _, _) ->
+    {render, <<"auth_login">>, []};
 
 handle_request(<<"POST">>, <<"login">>, _, Params, _) ->
     {ok, PostVals} = maps:find(<<"qs_body">>, Params),
@@ -28,9 +28,8 @@ handle_request(<<"POST">>, <<"login">>, _, Params, _) ->
                 ok ->
                     %% set session, and cookies etc.
                     Sid = web_util:hash_password(word_util:gen_pnr()),
-                    % session_worker:set_cookies(Email, Sid),
                     session_worker:set_cookies(Sid, Email),
-                    {redirect, <<"/">>, {cookie, Sid, Email}};
+                    {redirect, <<"/">>, {cookie, <<"auth">>, Email}};
                 error ->
                     {render, <<"auth_login">>, [
                             {error, "Username, or password is invalid"},
@@ -45,7 +44,7 @@ handle_request(<<"GET">>, <<"logout">>, _, Params, _) ->
     {redirect, <<"/">>};
 
 handle_request(<<"GET">>, <<"register">>, _Args, _Params, _Req) ->
-    {render, <<"register">>, []};
+    {render, <<"auth_register">>, []};
   
 handle_request(<<"POST">>, <<"register">>, _Args, Params, _Req) ->
     {ok, PostVals} = maps:find(<<"qs_body">>, Params),
