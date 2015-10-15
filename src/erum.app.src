@@ -1,7 +1,7 @@
 %% Application Definition
 {application, erum, [
     {description, "Erlang Forum App"},
-    {vsn, "v0.1"},
+    {vsn, "v1.0"},
     {modules, []},
     {registered, [erum_sup]},
     {applications, [
