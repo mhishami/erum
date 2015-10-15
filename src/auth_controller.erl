@@ -1,23 +1,16 @@
 -module(auth_controller).
 -export ([handle_request/5]).
--export ([before_filter/2]).
+-export ([before_filter/1]).
 
 -include("erum.hrl").
 
-before_filter(Params, _Req) ->
-    %% do some checking
-    User = maps:find(auth, Params),
-    case User of
-        undefined ->
-            {redirect, <<"/auth/login">>};
-        _ ->
-            {ok, proceed}
-    end.
+before_filter(_) ->
+    {ok, proceed}.
 
 handle_request(<<"GET">>, <<"login">> = Action, _, _, _) ->
     {render, Action, []};
 
-handle_request(<<"POST">>, <<"login">> = Action, _, Params, _) ->
+handle_request(<<"POST">>, <<"login">>, _, Params, _) ->
     {ok, PostVals} = maps:find(<<"qs_body">>, Params),
     Email = proplists:get_value(<<"email">>, PostVals, <<"">>),
     Password = proplists:get_value(<<"password">>, PostVals, <<"">>),
@@ -39,7 +32,7 @@ handle_request(<<"POST">>, <<"login">> = Action, _, Params, _) ->
                     session_worker:set_cookies(Sid, Email),
                     {redirect, <<"/">>, {cookie, Sid, Email}};
                 error ->
-                    {render, Action, [
+                    {render, <<"auth_login">>, [
                             {error, "Username, or password is invalid"},
                             {email, Email}
                     ]}
@@ -54,13 +47,14 @@ handle_request(<<"GET">>, <<"logout">>, _, Params, _) ->
 handle_request(<<"GET">>, <<"register">>, _Args, _Params, _Req) ->
     {render, <<"register">>, []};
   
-handle_request(<<"POST">>, <<"register">> = Action, _Args, Params, _Req) ->
+handle_request(<<"POST">>, <<"register">>, _Args, Params, _Req) ->
     {ok, PostVals} = maps:find(<<"qs_body">>, Params),
 
     Name = proplists:get_value(<<"name">>, PostVals),
     Email = proplists:get_value(<<"email">>, PostVals),
     Password = proplists:get_value(<<"password">>, PostVals),
     Password2 = proplists:get_value(<<"password2">>, PostVals),
+    Page = <<"auth_register">>,
 
     case Password =/= Password2 orelse
          size(Password) =:= 0 orelse
@@ -68,7 +62,7 @@ handle_request(<<"POST">>, <<"register">> = Action, _Args, Params, _Req) ->
          size(Email) =:= 0 of
         true ->
             %% passwords are not the same
-            {render, Action, [
+            {render, Page, [
                 {name, Name},
                 {email, Email},
                 {error, "Opps! All fields are required. Also, make sure all passwords are the same"}
@@ -78,12 +72,12 @@ handle_request(<<"POST">>, <<"register">> = Action, _Args, Params, _Req) ->
             User = #{<<"name">> => Name, 
                      <<"email">> => Email, 
                      <<"password">> => web_util:hash_password(Password)},
-            ?DEBUG("Action= ~p, User = ~p~n", [Action, User]),
+            ?DEBUG("Page= ~p, User = ~p~n", [Page, User]),
             case mongo_worker:save(?DB_USER, User) of
                 {ok, _} ->
                     {redirect, <<"/">>};
                 _ ->
-                    {render, Action, [
+                    {render, Page, [
                         {name, Name},
                         {email, Email},
                         {error, "Cannot save user data. Pls come again!"}
@@ -92,9 +86,9 @@ handle_request(<<"POST">>, <<"register">> = Action, _Args, Params, _Req) ->
 
     end;
 
-handle_request(<<"GET">>, _Action, _Args, _Params, _Req) ->    
+handle_request(_Method, _Action, _Args, _Params, _Req) ->    
     %% / will render home.dtl
-    {render, []}.
+    {redirect, <<"/">>}.
 
 %% ----------------------------------------------------------------------------
 %% Private funs
